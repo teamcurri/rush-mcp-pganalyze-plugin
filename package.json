@@ -1,0 +1,47 @@
+{
+  "name": "rush-mcp-pganalyze-plugin",
+  "version": "0.1.0",
+  "description": "Rush MCP plugin for pganalyze PostgreSQL monitoring",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": {
+    "pganalyze-mcp": "./cli.js"
+  },
+  "files": [
+    "lib/**/*",
+    "cli.js",
+    "rush-mcp-plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "cli": "node cli.js",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/teamcurri/rush-mcp-pganalyze-plugin.git"
+  },
+  "keywords": [
+    "rush",
+    "mcp",
+    "pganalyze",
+    "postgres",
+    "monitoring",
+    "plugin"
+  ],
+  "author": "Curri",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/teamcurri/rush-mcp-pganalyze-plugin/issues"
+  },
+  "homepage": "https://github.com/teamcurri/rush-mcp-pganalyze-plugin#readme",
+  "dependencies": {
+    "@types/node": "^24.0.1",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@rushstack/mcp-server": "^0.2.1"
+  }
+}
