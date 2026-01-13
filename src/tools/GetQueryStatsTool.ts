@@ -1,9 +1,11 @@
 import type { IRushMcpTool, RushMcpPluginSession, CallToolResult, zodModule } from '../types/rush-mcp-plugin';
 import type { PganalyzePlugin } from '../index';
 import { executeGraphQL } from '../utils';
+import { getCacheKey, getFromCache, setInCache } from '../cache';
 
 interface QueryStat {
   id: string;
+  queryId: string;
   queryUrl: string;
   normalizedQuery: string;
   truncatedQuery: string;
@@ -11,9 +13,10 @@ interface QueryStat {
   statementTypes: string[];
   totalCalls: number;
   avgTime: number;
-  avgIoTime: number | null;
+  avgIoTime: number;
   bufferHitRatio: number;
   pctOfTotal: number;
+  callsPerMinute: number;
 }
 
 interface GetQueryStatsResponse {
@@ -47,15 +50,40 @@ export class GetQueryStatsTool implements IRushMcpTool<GetQueryStatsTool['schema
         .number()
         .default(20)
         .describe('Number of queries to return (default: 20)'),
+      forceRefresh: zod
+        .boolean()
+        .optional()
+        .describe('Force a fresh API call, bypassing the 1-hour cache'),
     });
   }
 
   public async executeAsync(input: zodModule.infer<GetQueryStatsTool['schema']>): Promise<CallToolResult> {
     try {
+      const cacheKey = getCacheKey('pganalyze_get_query_stats', input as Record<string, unknown>);
+      
+      // Check cache unless forceRefresh is true
+      if (!input.forceRefresh) {
+        const cached = getFromCache<{ queries: unknown[]; database_id: string }>(cacheKey);
+        if (cached) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  ...cached,
+                  cached: true,
+                }, null, 2),
+              },
+            ],
+          };
+        }
+      }
+
       const query = `
-        query GetQueryStats($databaseId: ID!, $startTs: Int, $endTs: Int) {
-          getQueryStats(databaseId: $databaseId, startTs: $startTs, endTs: $endTs) {
+        query GetQueryStats($databaseId: ID!, $startTs: Int, $endTs: Int, $limit: Int) {
+          getQueryStats(databaseId: $databaseId, startTs: $startTs, endTs: $endTs, limit: $limit) {
             id
+            queryId
             queryUrl
             normalizedQuery
             truncatedQuery
@@ -66,41 +94,50 @@ export class GetQueryStatsTool implements IRushMcpTool<GetQueryStatsTool['schema
             avgIoTime
             bufferHitRatio
             pctOfTotal
+            callsPerMinute
           }
         }
       `;
 
       const variables: Record<string, unknown> = {
         databaseId: input.databaseId,
+        limit: input.limit,
       };
       if (input.startTs) variables.startTs = input.startTs;
       if (input.endTs) variables.endTs = input.endTs;
 
       const data = await executeGraphQL<GetQueryStatsResponse>(query, variables);
 
-      // Limit results and sort by pctOfTotal descending
+      // Results already sorted by pganalyze, just map
       const queries = data.getQueryStats
-        .sort((a, b) => b.pctOfTotal - a.pctOfTotal)
-        .slice(0, input.limit)
         .map(q => ({
-          id: q.id,
+          id: q.queryId,
           query: q.truncatedQuery,
           url: q.queryUrl,
           statement_types: q.statementTypes,
           total_calls: q.totalCalls,
+          calls_per_minute: Math.round(q.callsPerMinute * 100) / 100,
           avg_time_ms: Math.round(q.avgTime * 100) / 100,
           buffer_hit_ratio: Math.round(q.bufferHitRatio * 100) / 100,
           pct_of_total: Math.round(q.pctOfTotal * 100) / 100,
         }));
+
+      const result = {
+        database_id: input.databaseId,
+        query_count: queries.length,
+        queries,
+      };
+      
+      // Cache the formatted result
+      setInCache(cacheKey, result);
 
       return {
         content: [
           {
             type: 'text',
             text: JSON.stringify({
-              database_id: input.databaseId,
-              query_count: queries.length,
-              queries,
+              ...result,
+              cached: false,
             }, null, 2),
           },
         ],

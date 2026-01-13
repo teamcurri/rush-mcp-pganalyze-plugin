@@ -9,13 +9,16 @@ export declare class GetQueryStatsTool implements IRushMcpTool<GetQueryStatsTool
         startTs: zodModule.ZodOptional<zodModule.ZodNumber>;
         endTs: zodModule.ZodOptional<zodModule.ZodNumber>;
         limit: zodModule.ZodDefault<zodModule.ZodNumber>;
+        forceRefresh: zodModule.ZodOptional<zodModule.ZodBoolean>;
     }, "strip", zodModule.ZodTypeAny, {
         databaseId: string;
         limit: number;
+        forceRefresh?: boolean | undefined;
         startTs?: number | undefined;
         endTs?: number | undefined;
     }, {
         databaseId: string;
+        forceRefresh?: boolean | undefined;
         startTs?: number | undefined;
         endTs?: number | undefined;
         limit?: number | undefined;

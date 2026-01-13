@@ -4,7 +4,13 @@ export declare class GetServersTool implements IRushMcpTool<GetServersTool['sche
     readonly plugin: PganalyzePlugin;
     readonly session: RushMcpPluginSession;
     constructor(plugin: PganalyzePlugin);
-    get schema(): zodModule.ZodObject<{}, "strip", zodModule.ZodTypeAny, {}, {}>;
-    executeAsync(_input: zodModule.infer<GetServersTool['schema']>): Promise<CallToolResult>;
+    get schema(): zodModule.ZodObject<{
+        forceRefresh: zodModule.ZodOptional<zodModule.ZodBoolean>;
+    }, "strip", zodModule.ZodTypeAny, {
+        forceRefresh?: boolean | undefined;
+    }, {
+        forceRefresh?: boolean | undefined;
+    }>;
+    executeAsync(input: zodModule.infer<GetServersTool['schema']>): Promise<CallToolResult>;
 }
 //# sourceMappingURL=GetServersTool.d.ts.map

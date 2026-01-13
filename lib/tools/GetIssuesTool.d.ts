@@ -9,12 +9,15 @@ export declare class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema
         databaseId: zodModule.ZodOptional<zodModule.ZodString>;
         severity: zodModule.ZodOptional<zodModule.ZodString>;
         resolved: zodModule.ZodDefault<zodModule.ZodBoolean>;
+        forceRefresh: zodModule.ZodOptional<zodModule.ZodBoolean>;
     }, "strip", zodModule.ZodTypeAny, {
         resolved: boolean;
+        forceRefresh?: boolean | undefined;
         databaseId?: string | undefined;
         serverId?: string | undefined;
         severity?: string | undefined;
     }, {
+        forceRefresh?: boolean | undefined;
         databaseId?: string | undefined;
         serverId?: string | undefined;
         severity?: string | undefined;

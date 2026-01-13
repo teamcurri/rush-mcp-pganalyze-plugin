@@ -1,13 +1,16 @@
 import type { IRushMcpTool, RushMcpPluginSession, CallToolResult, zodModule } from '../types/rush-mcp-plugin';
 import type { PganalyzePlugin } from '../index';
 import { executeGraphQL } from '../utils';
+import { getCacheKey, getFromCache, setInCache } from '../cache';
 
 interface Server {
   id: string;
   name: string;
+  humanId: string;
   databases: Array<{
     id: string;
-    name: string;
+    datname: string | null;
+    displayName: string;
   }>;
 }
 
@@ -26,25 +29,56 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
 
   public get schema() {
     const zod: typeof zodModule = this.session.zod;
-    return zod.object({});
+    return zod.object({
+      forceRefresh: zod
+        .boolean()
+        .optional()
+        .describe('Force a fresh API call, bypassing the 1-hour cache'),
+    });
   }
 
-  public async executeAsync(_input: zodModule.infer<GetServersTool['schema']>): Promise<CallToolResult> {
+  public async executeAsync(input: zodModule.infer<GetServersTool['schema']>): Promise<CallToolResult> {
     try {
+      const cacheKey = getCacheKey('pganalyze_get_servers', input as Record<string, unknown>);
+      
+      // Check cache unless forceRefresh is true
+      if (!input.forceRefresh) {
+        const cached = getFromCache<GetServersResponse>(cacheKey);
+        if (cached) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  servers: cached.getServers,
+                  count: cached.getServers.length,
+                  cached: true,
+                }, null, 2),
+              },
+            ],
+          };
+        }
+      }
+
       const query = `
         query {
           getServers {
             id
             name
+            humanId
             databases {
               id
-              name
+              datname
+              displayName
             }
           }
         }
       `;
 
       const data = await executeGraphQL<GetServersResponse>(query);
+      
+      // Cache the response
+      setInCache(cacheKey, data);
 
       return {
         content: [
@@ -53,6 +87,7 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
             text: JSON.stringify({
               servers: data.getServers,
               count: data.getServers.length,
+              cached: false,
             }, null, 2),
           },
         ],
