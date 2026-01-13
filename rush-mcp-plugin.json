@@ -1,3 +1,4 @@
 {
-  "pluginName": "rush-mcp-pganalyze-plugin"
+  "pluginName": "pganalyze",
+  "entryPoint": "./lib/index.js"
 }
