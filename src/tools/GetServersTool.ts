@@ -30,6 +30,10 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
   public get schema() {
     const zod: typeof zodModule = this.session.zod;
     return zod.object({
+      organizationSlug: zod
+        .string()
+        .optional()
+        .describe('Organization slug to filter servers by (e.g., "curri-inc")'),
       forceRefresh: zod
         .boolean()
         .optional()
@@ -61,8 +65,8 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
       }
 
       const query = `
-        query {
-          getServers {
+        query GetServers($organizationSlug: ID) {
+          getServers(organizationSlug: $organizationSlug) {
             id
             name
             humanId
@@ -75,7 +79,12 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
         }
       `;
 
-      const data = await executeGraphQL<GetServersResponse>(query);
+      const variables: Record<string, unknown> = {};
+      if ((input as Record<string, unknown>).organizationSlug) {
+        variables.organizationSlug = (input as Record<string, unknown>).organizationSlug;
+      }
+
+      const data = await executeGraphQL<GetServersResponse>(query, variables);
       
       // Cache the response
       setInCache(cacheKey, data);

@@ -14,14 +14,14 @@ export declare class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema
     }, "strip", zodModule.ZodTypeAny, {
         resolved: boolean;
         forceRefresh?: boolean | undefined;
-        databaseId?: string | undefined;
         organizationSlug?: string | undefined;
+        databaseId?: string | undefined;
         serverId?: string | undefined;
         severity?: string | undefined;
     }, {
         forceRefresh?: boolean | undefined;
-        databaseId?: string | undefined;
         organizationSlug?: string | undefined;
+        databaseId?: string | undefined;
         serverId?: string | undefined;
         severity?: string | undefined;
         resolved?: boolean | undefined;
