@@ -5,6 +5,7 @@ export declare class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema
     readonly session: RushMcpPluginSession;
     constructor(plugin: PganalyzePlugin);
     get schema(): zodModule.ZodObject<{
+        organizationSlug: zodModule.ZodOptional<zodModule.ZodString>;
         serverId: zodModule.ZodOptional<zodModule.ZodString>;
         databaseId: zodModule.ZodOptional<zodModule.ZodString>;
         severity: zodModule.ZodOptional<zodModule.ZodString>;
@@ -14,11 +15,13 @@ export declare class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema
         resolved: boolean;
         forceRefresh?: boolean | undefined;
         databaseId?: string | undefined;
+        organizationSlug?: string | undefined;
         serverId?: string | undefined;
         severity?: string | undefined;
     }, {
         forceRefresh?: boolean | undefined;
         databaseId?: string | undefined;
+        organizationSlug?: string | undefined;
         serverId?: string | undefined;
         severity?: string | undefined;
         resolved?: boolean | undefined;

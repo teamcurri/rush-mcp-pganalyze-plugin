@@ -35,6 +35,10 @@ export class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema']> {
   public get schema() {
     const zod: typeof zodModule = this.session.zod;
     return zod.object({
+      organizationSlug: zod
+        .string()
+        .optional()
+        .describe('Organization slug to filter issues by (optional, but required if no serverId)'),
       serverId: zod
         .string()
         .optional()
@@ -81,8 +85,8 @@ export class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema']> {
       }
 
       const query = `
-        query GetIssues($serverId: ID, $databaseId: ID, $state: String) {
-          getIssues(serverId: $serverId, databaseId: $databaseId, state: $state) {
+        query GetIssues($organizationSlug: ID, $serverId: ID, $databaseId: ID, $state: String) {
+          getIssues(organizationSlug: $organizationSlug, serverId: $serverId, databaseId: $databaseId, state: $state) {
             id
             checkGroupAndName
             description
@@ -101,6 +105,7 @@ export class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema']> {
       `;
 
       const variables: Record<string, unknown> = {};
+      if ((input as Record<string, unknown>).organizationSlug) variables.organizationSlug = (input as Record<string, unknown>).organizationSlug;
       if (input.serverId) variables.serverId = input.serverId;
       if (input.databaseId) variables.databaseId = input.databaseId;
       // Filter by state - 'open' means unresolved, 'resolved' means resolved
