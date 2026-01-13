@@ -96,6 +96,8 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
           {
             type: 'text',
             text: JSON.stringify({
+              input_received: input,
+              variables_used: variables,
               servers: data.getServers,
               count: data.getServers.length,
               cached: false,
