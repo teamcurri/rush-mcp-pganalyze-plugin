@@ -43,7 +43,6 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
 
   public async executeAsync(input: zodModule.infer<GetServersTool['schema']>): Promise<CallToolResult> {
     try {
-      console.error('[GetServersTool] Input received:', JSON.stringify(input));
       const cacheKey = getCacheKey('pganalyze_get_servers', input as Record<string, unknown>);
       
       // Check cache unless forceRefresh is true
@@ -96,8 +95,6 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
           {
             type: 'text',
             text: JSON.stringify({
-              input_received: input,
-              variables_used: variables,
               servers: data.getServers,
               count: data.getServers.length,
               cached: false,
