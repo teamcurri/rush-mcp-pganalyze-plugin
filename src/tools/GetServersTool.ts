@@ -43,6 +43,7 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
 
   public async executeAsync(input: zodModule.infer<GetServersTool['schema']>): Promise<CallToolResult> {
     try {
+      console.error('[GetServersTool] Input received:', JSON.stringify(input));
       const cacheKey = getCacheKey('pganalyze_get_servers', input as Record<string, unknown>);
       
       // Check cache unless forceRefresh is true
@@ -80,8 +81,9 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
       `;
 
       const variables: Record<string, unknown> = {};
-      if ((input as Record<string, unknown>).organizationSlug) {
-        variables.organizationSlug = (input as Record<string, unknown>).organizationSlug;
+      const inputAny = input as { organizationSlug?: string; forceRefresh?: boolean };
+      if (inputAny.organizationSlug) {
+        variables.organizationSlug = inputAny.organizationSlug;
       }
 
       const data = await executeGraphQL<GetServersResponse>(query, variables);
