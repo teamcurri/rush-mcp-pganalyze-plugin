@@ -2,6 +2,7 @@ import type { IRushMcpTool, RushMcpPluginSession, CallToolResult, zodModule } fr
 import type { PganalyzePlugin } from '../index';
 import { executeGraphQL } from '../utils';
 import { getCacheKey, getFromCache, setInCache } from '../cache';
+import { checkPganalyzeToken, handlePganalyzeError } from '../elicitation';
 
 interface Server {
   id: string;
@@ -42,6 +43,12 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
   }
 
   public async executeAsync(input: zodModule.infer<GetServersTool['schema']>): Promise<CallToolResult> {
+    // Check prerequisites - token required
+    const tokenCheck = checkPganalyzeToken();
+    if (tokenCheck) {
+      return tokenCheck;
+    }
+
     try {
       const cacheKey = getCacheKey('pganalyze_get_servers', input as Record<string, unknown>);
       
@@ -103,15 +110,7 @@ export class GetServersTool implements IRushMcpTool<GetServersTool['schema']> {
         ],
       };
     } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Failed to get servers: ${error}`,
-          },
-        ],
-        isError: true,
-      };
+      return handlePganalyzeError(error, 'get servers');
     }
   }
 }

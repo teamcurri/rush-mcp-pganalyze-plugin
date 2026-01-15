@@ -2,6 +2,7 @@ import type { IRushMcpTool, RushMcpPluginSession, CallToolResult, zodModule } fr
 import type { PganalyzePlugin } from '../index';
 import { executeGraphQL } from '../utils';
 import { getCacheKey, getFromCache, setInCache } from '../cache';
+import { checkPganalyzeToken, handlePganalyzeError } from '../elicitation';
 
 interface QueryStat {
   id: string;
@@ -58,6 +59,12 @@ export class GetQueryStatsTool implements IRushMcpTool<GetQueryStatsTool['schema
   }
 
   public async executeAsync(input: zodModule.infer<GetQueryStatsTool['schema']>): Promise<CallToolResult> {
+    // Check prerequisites - token required
+    const tokenCheck = checkPganalyzeToken();
+    if (tokenCheck) {
+      return tokenCheck;
+    }
+
     try {
       const cacheKey = getCacheKey('pganalyze_get_query_stats', input as Record<string, unknown>);
       
@@ -143,15 +150,7 @@ export class GetQueryStatsTool implements IRushMcpTool<GetQueryStatsTool['schema
         ],
       };
     } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Failed to get query stats: ${error}`,
-          },
-        ],
-        isError: true,
-      };
+      return handlePganalyzeError(error, 'get query stats');
     }
   }
 }

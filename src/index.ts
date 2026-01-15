@@ -1,8 +1,8 @@
 import type { IRushMcpPlugin, RushMcpPluginSession } from './types/rush-mcp-plugin';
-import { checkApiToken } from './utils';
 import { GetServersTool } from './tools/GetServersTool';
 import { GetQueryStatsTool } from './tools/GetQueryStatsTool';
 import { GetIssuesTool } from './tools/GetIssuesTool';
+import { SetPganalyzeApiTokenTool } from './tools/SetPganalyzeApiTokenTool';
 
 export class PganalyzePlugin implements IRushMcpPlugin {
   public session: RushMcpPluginSession;
@@ -12,10 +12,13 @@ export class PganalyzePlugin implements IRushMcpPlugin {
   }
 
   public async onInitializeAsync(): Promise<void> {
-    // Check API token on boot - throws if not set
-    checkApiToken();
+    // Register configuration tool first - doesn't require token
+    this.session.registerTool(
+      { toolName: 'set_pganalyze_api_token' },
+      new SetPganalyzeApiTokenTool(this)
+    );
 
-    // Register tools
+    // Register data tools - they will check for token at runtime
     this.session.registerTool(
       { toolName: 'pganalyze_get_servers' },
       new GetServersTool(this)
@@ -31,7 +34,12 @@ export class PganalyzePlugin implements IRushMcpPlugin {
       new GetIssuesTool(this)
     );
 
-    console.error('[pganalyze Plugin] Registered 3 tools (pganalyze_get_servers, pganalyze_get_query_stats, pganalyze_get_issues)');
+    // Log token status but don't fail
+    if (!process.env.PGANALYZE_API_TOKEN) {
+      console.error('[pganalyze Plugin] API token not set - tools will prompt for configuration');
+    }
+
+    console.error('[pganalyze Plugin] Registered 4 tools (set_pganalyze_api_token, pganalyze_get_servers, pganalyze_get_query_stats, pganalyze_get_issues)');
   }
 
   public async onShutdownAsync(): Promise<void> {

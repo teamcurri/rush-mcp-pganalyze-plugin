@@ -2,6 +2,7 @@ import type { IRushMcpTool, RushMcpPluginSession, CallToolResult, zodModule } fr
 import type { PganalyzePlugin } from '../index';
 import { executeGraphQL } from '../utils';
 import { getCacheKey, getFromCache, setInCache } from '../cache';
+import { checkPganalyzeToken, handlePganalyzeError } from '../elicitation';
 
 interface Issue {
   id: string;
@@ -63,6 +64,12 @@ export class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema']> {
   }
 
   public async executeAsync(input: zodModule.infer<GetIssuesTool['schema']>): Promise<CallToolResult> {
+    // Check prerequisites - token required
+    const tokenCheck = checkPganalyzeToken();
+    if (tokenCheck) {
+      return tokenCheck;
+    }
+
     try {
       const cacheKey = getCacheKey('pganalyze_get_issues', input as Record<string, unknown>);
       
@@ -157,15 +164,7 @@ export class GetIssuesTool implements IRushMcpTool<GetIssuesTool['schema']> {
         ],
       };
     } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Failed to get issues: ${error}`,
-          },
-        ],
-        isError: true,
-      };
+      return handlePganalyzeError(error, 'get issues');
     }
   }
 }
